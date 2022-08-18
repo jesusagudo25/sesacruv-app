@@ -1,57 +1,72 @@
 import { useState, useEffect } from 'react';
 import { View, Text, TextInput, TouchableOpacity, StyleSheet } from "react-native";
-import CheckBox from 'expo-checkbox';
 import axios from 'axios';
 import { config } from '../../config';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { Header, ListItem, Avatar, Card, Icon, Divider, CheckBox, Button } from '@rneui/themed';
 
-const RequestAppointment = ({navigation}) => {
+//Se debe refactorizar en el futuro: Formik y yupi
 
-    const [isChecked, setChecked] = useState(false);
+const RequestAppointment = ({ navigation }) => {
+
+    const [checked, setChecked] = useState(false);
     const [receipt, setReceipt] = useState('');
+    const [phoneNumber, setPhoneNumber] = useState('');
     const [name, setName] = useState('');
-    const [identification, setIdentification] = useState('');
 
     const sendForm = async () => {
-        if(!isChecked) {
-            alert('Para solicitar um agendamento, você deve aceitar os termos e condições.');
+        if (!receipt || !phoneNumber) {
+            alert('Para solicitar una cita de pre-revisón, debes ingresar los datos correspondientes..');
+            return;
+        }
+        
+        if (!checked) {
+            alert('Para solicitar una cita de pre revisión, debes marcar la casilla de confirmación.');
             return;
         }
 
-        if(!receipt) {
-            alert('Para solicitar um agendamento, você deve informar o número do recibo.');
-            return;
-        }
-
-        try{
+        try {
             const response = await axios.post(`${config.API_URL}/reviews`, {
-                receipt_number: receipt
+                id: receipt,
+                phone_number: phoneNumber,
             });
 
-            if(response.data.standby){
-                alert('Actualmente no hay citas disponibles, ha ingresado en una lista de espera.');
-                navigation.navigate('Home');
-                //Aqui se debe guardar en local storage el id de la standby, para que se pueda acceder a el desde el home
-                //Se puede crear una introduccion a la lista de esperas, y luego una de Details para ese caso...
-            }
-            else{
-                //Aqui se debe guardar en local storage el id de la cita, para que se pueda acceder a el desde el home
-                setName(response.data.review.student.name);
-                setIdentification(response.data.review.student.identity_card);
+            if (response.data.standby) {
+                setName(response.data.name);
+                AsyncStorage.setItem('@requestId', JSON.stringify(response.data.standby));
+                AsyncStorage.setItem('@requestName', 'standby');
 
                 setTimeout(() => {
                     alert('Su cita ha sido agendada con éxito.');
                 }, 500);
 
                 setTimeout(() => {
-                    navigation.navigate('Request',{
-                        id: response.data.review.id,
+                    navigation.navigate('StandbyOnBoarding', {
+                        id: response.data.standby,
+                        name: 'standby',
                     });
                 }, 1000);
-        }
+            }
+            else {
+                setName(response.data.review.name);
+                AsyncStorage.setItem('@requestId', JSON.stringify(response.data.review.id));
+                AsyncStorage.setItem('@requestName', 'review');
+
+                setTimeout(() => {
+                    alert('Su cita ha sido agendada con éxito.');
+                }, 500);
+
+                setTimeout(() => {
+                    navigation.navigate('ReviewOnBoarding', {
+                        id: response.data.review.id,
+                        name: 'review',
+                    });
+                }, 1000);
+            }
 
             //Falta realizar una mejor validacion con alguna libreria front-end
         }
-        catch(error){
+        catch (error) {
             alert('El recibo es incorrecto o ya existe una cita para ese recibo.');
             console.log(error);
         }
@@ -59,28 +74,46 @@ const RequestAppointment = ({navigation}) => {
 
     return (
         <View style={styles.container}>
-            <Text style={styles.text}>Request Appointment</Text>
-            
-            <TextInput style={styles.input} placeholder="Receipt number" onChangeText={e => setReceipt(e)} value={receipt} />
-            <TextInput style={styles.inputDisabled} placeholder="Name" editable={false} selectTextOnFocus={false} onChangeText={e => setName(e)} value={name} />
-            <TextInput style={styles.inputDisabled} placeholder="Identification" editable={false} selectTextOnFocus={false} onChangeText={e => setIdentification(e)} value={identification} />
+            <Text style={styles.textPrimary}>Solicitud</Text>
+            <Text style={styles.textSecundary}>Pre-revisión</Text>
 
-            <View style={styles.checkboxContainer}>
-                <CheckBox
-                    style={styles.checkbox}
-                    value={isChecked} 
-                    onValueChange={setChecked}
-                    color="#000"
-                />
-                <Text style={styles.paragraph}>¿Has verificado los datos ingresados?</Text>
-            </View>
+            <TextInput style={styles.inputText} placeholder="Ingresa el número de recibo" onChangeText={e => setReceipt(e)} value={receipt} />
+            <TextInput style={styles.inputText} placeholder="Ingresa el número de telefono" onChangeText={e => setPhoneNumber(e)} value={phoneNumber} />
 
-            <TouchableOpacity style={styles.button} onPress={sendForm}>
-                <Text style={styles.buttonText}>Enviar Solicitud</Text>
+            <CheckBox
+                title="¿Has verificado los datos ingresados?"
+                checked={checked}
+                checkedColor="#3b82f6"
+                onPress={() => setChecked(!checked)}
+                textStyle={{ fontWeight: "300", color: "gray" }}
+                containerStyle={{ margin: 0, padding: 0, textAlign: "left", justifyContent: "flex-start", alignItems: "flex-start" }}
+            />
+
+            <Button
+                title={'Enviar solicitud'}
+                containerStyle={{
+                    justifyContent: "center",
+                    alignItems: "center",
+                    marginTop: 35,
+                    marginBottom: 20
+                }}
+                buttonStyle={{
+                    backgroundColor: "#3b82f6",
+                    borderRadius: 3,
+                    paddingHorizontal: 15,
+                    paddingVertical: 10
+                }}
+                onPress={() => sendForm()}
+                //Agregar loading
+            />
+
+            <TouchableOpacity
+                activeOpacity={0.5}
+                onPress={() => {
+                    navigation.navigate('Requirements');
+                }}>
+                <Text style={{ textAlign: "center", fontSize: 14, color: "#43484d" }} >Revisa los <Text style={{ fontWeight: "bold" }}>requerimientos</Text> antes de enviar la solicitud </Text>
             </TouchableOpacity>
-            <Text style={styles.paragraph}>¿Has revisado los requerimientos?                                
-            <TouchableOpacity><Text>Revisar</Text></TouchableOpacity>
-            </Text>
         </View>
     );
 }
@@ -90,11 +123,30 @@ export default RequestAppointment;
 const styles = StyleSheet.create({
     container: {
         flex: 1,
-        backgroundColor: "#fff",
-        justifyContent: "center"
+        justifyContent: "center",
+        padding: 30,
+        backgroundColor: "white"
     },
-    text: {
-        fontSize: 30
+    textPrimary: {
+        fontSize: 28,
+        fontWeight: 'bold',
+        textAlign: 'center',
+        marginBottom: 10,
+        color: "#43484d"
+    },
+    textSecundary: {
+        fontSize: 14,
+        fontWeight: "400",
+        textAlign: "center",
+        color: "gray",
+        marginBottom: 15
+    },
+    inputText: {
+        borderWidth: 1,
+        borderRadius: 5,
+        borderColor: "#D9D9D9",
+        padding: 8,
+        marginBottom: 15
     },
     button: {
         backgroundColor: "#000",
@@ -128,5 +180,10 @@ const styles = StyleSheet.create({
     paragraph: {
         margin: 10,
         fontSize: 15
+    },
+    textFooter: {
+        justifyContent: "center",
+        alignItems: "center",
+        textAlign: "auto"
     }
 });

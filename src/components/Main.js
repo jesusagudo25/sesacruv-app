@@ -9,10 +9,10 @@ import Contact from '../../src/screens/Support/Contact';
 import Terms from '../../src/screens/Support/Terms';
 import RequestAppoinment from '../../src/screens/Request/RequestAppointment';
 import Details from '../../src/screens/Request/Appoiment/Details';
-import Messages from '../../src/screens/Request/Appoiment/Messages';
 
 //Slides
-import Request from './Onboarding/request/Onboarding';
+import ReviewOnBoarding from './Onboarding/review/Onboarding';
+import StandbyOnBoarding from './Onboarding/standby/Onboarding';
 import { HeaderBackButton } from '@react-navigation/elements';
 
 const Stack = createNativeStackNavigator();
@@ -20,11 +20,23 @@ const Stack = createNativeStackNavigator();
 const Main = () => {
     return (
         <NavigationContainer>
-            <Stack.Navigator initialRouteName="Home">
+            <Stack.Navigator initialRouteName="Home" screenOptions={{
+                headerStyle: {
+                    backgroundColor: '#3b82f6',
+                    },
+                headerTintColor: '#fff',
+                headerTitleStyle: {
+
+                    }}}
+            >
                 <Stack.Screen name="Home" component={Home} options={{ headerShown: false}}/>
                 <Stack.Group>
-                    <Stack.Screen name="Requirements" component={Requirements}/>
-                    <Stack.Screen name="Operation" component={Operation}/>
+                    <Stack.Screen name="Requirements" component={Requirements}
+                    options={{ title: 'Requerimientos' }}
+                    />
+                    <Stack.Screen name="Operation" component={Operation}
+                    options={{ title: 'Funcionamiento' }}
+                    />
                 </Stack.Group>
 
                 <Stack.Group>
@@ -36,19 +48,23 @@ const Main = () => {
                 <Stack.Group>
                     <Stack.Screen name="RequestAppoinment" component={RequestAppoinment} options={{ headerShown: false}}/>
 
-                    <Stack.Screen name="Request" component={Request} options={{ headerShown: false}}/>
+                    <Stack.Screen name="ReviewOnBoarding" component={ReviewOnBoarding} options={{ headerShown: false}}/>
+
+                    <Stack.Screen name="StandbyOnBoarding" component={StandbyOnBoarding} options={{ headerShown: false}}/>
+
                     <Stack.Screen name="Details" component={Details} options={({ navigation, route }) => ({
                     title: 'Pre-revisión',
                     headerLeft: (props) => (
                         <HeaderBackButton 
                         {...props}
-                        onPress={()  =>{ navigation.navigate('Home', {
+                        onPress={()  =>{ 
+                            navigation.navigate('Home', {
                             id: route.params.id,
+                            name: route.params.name
                         }); }} 
                         />
                     ),
                     })} />
-                    <Stack.Screen name="Messages" component={Messages}/>
                 </Stack.Group>
             </Stack.Navigator>
         </NavigationContainer>

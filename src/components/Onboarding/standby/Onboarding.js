@@ -4,12 +4,12 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 
 import OnboardingItem from "./OnboardingItem";
 import Paginator from "../Paginator";
-import slides from "../../../data/slides/request";
+import slides from "../../../data/slides/standby.js";
 import NextButton from "../NextButton";
 
 export default function Onboarding({route, navigation}) {
 
-    const {id} = route.params;
+    const {id,name} = route.params;
 
     const [currentIndex, setCurrentIndex] = useState(0);
     const scrollX = useRef(new Animated.Value(0)).current;
@@ -28,9 +28,9 @@ export default function Onboarding({route, navigation}) {
             });
         }else {
             try {
-                AsyncStorage.setItem('@requestId', JSON.stringify(id));
                 navigation.navigate('Details',{
                     id: id,
+                    name: name
                 });
             }
             catch (error) {

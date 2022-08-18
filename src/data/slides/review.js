@@ -2,7 +2,7 @@ export default [
     {
         id: 1,
         title: '¡Solicitud enviada!',
-        description: 'La sección de registros académicos ha recibido con exito tú solicitud, en seguida conoceras los detalles de tú solicitud.',
+        description: 'La sección de registros académicos ha recibido con exito tú solicitud, en seguida conoceras los detalles.',
         image: require("../../../assets/images/slides/welcome/congratulations.png")
     },
     {
